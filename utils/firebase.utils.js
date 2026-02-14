@@ -98,34 +98,43 @@ class FirebaseUtils {
       return null
     })()
 
-    const yarnPromise = axios.get(
-      `https://${
-        process.env.ALGOLIA_APP_ID
-      }-dsn.algolia.net/1/indexes/npm-search/${encodeURIComponent(name)}`,
-      {
-        params: {
-          'x-algolia-agent': 'bundlephobia',
-          'x-algolia-application-id': process.env.ALGOLIA_APP_ID,
-          'x-algolia-api-key': process.env.ALGOLIA_API_KEY,
-        },
-      }
-    )
+    // Algoliaが設定されていない場合はnpm registryから直接取得
+    const versionsPromise = process.env.ALGOLIA_API_KEY
+      ? axios
+          .get(
+            `https://${
+              process.env.ALGOLIA_APP_ID
+            }-dsn.algolia.net/1/indexes/npm-search/${encodeURIComponent(name)}`,
+            {
+              params: {
+                'x-algolia-agent': 'bundlephobia',
+                'x-algolia-application-id': process.env.ALGOLIA_APP_ID,
+                'x-algolia-api-key': process.env.ALGOLIA_API_KEY,
+              },
+            }
+          )
+          .then(res =>
+            Object.keys({
+              [res.data.version]: '',
+              ...res.data.versions,
+            })
+          )
+      : axios
+          .get(`https://registry.npmjs.org/${encodeURIComponent(name)}`)
+          .then(res => Object.keys(res.data.versions || {}))
+          .catch(() => null)
 
     let firebaseHistory, versions
     try {
-      const [firebaseResult, yarnInfo] = await Promise.all([
+      const [firebaseResult, npmVersions] = await Promise.all([
         firebasePromise,
-        yarnPromise,
+        versionsPromise,
       ])
 
       firebaseHistory = firebaseResult
-      yarnInfo.data.versions = {
-        [yarnInfo.data.version]: '',
-        ...yarnInfo.data.versions,
-      }
-      versions = Object.keys(yarnInfo.data.versions)
+      versions = npmVersions || []
     } catch (err) {
-      console.error(err)
+      debug('Failed to fetch versions: %s', err.message)
       firebaseHistory = await firebasePromise
       versions = Object.keys(firebaseHistory || {}).map(version =>
         decodeFirebaseKey(version)

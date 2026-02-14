@@ -30,3 +30,15 @@ scripts/keys
 maintenance_logs/
 top-packages.json
 populate-v3-*.json
+
+# Firebase Emulator
+*-debug.log
+firebase-debug.log
+database-debug.log
+ui-debug.log
+
+# mise
+mise.toml
+
+# Build output
+dist/

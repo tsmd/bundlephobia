@@ -66,6 +66,99 @@ You can see a detailed stack trace in your devtools console, and [open an issue]
 
 See [Contributing](https://github.com/pastelsky/bundlephobia/blob/bundlephobia/CONTRIBUTING.md)
 
+## ローカル開発環境のセットアップ
+
+本家 bundlephobia.com がダウンしている場合など、ローカルで動かすための手順です。
+
+### 必要条件
+
+- Node.js >= 24.0.0
+- Yarn (corepack 経由で有効化)
+- Java (Firebase エミュレータ用)
+- Firebase CLI
+
+### セットアップ
+
+```bash
+# Yarnを有効化
+corepack enable
+
+# 依存関係をインストール
+yarn install
+
+# cache-serviceの依存関係もインストール
+cd cache-service && yarn install && cd ..
+
+# Firebase CLIをインストール（未インストールの場合）
+npm install -g firebase-tools
+```
+
+### .env ファイルの作成
+
+プロジェクトルートに `.env` ファイルを作成:
+
+```ini
+PORT=3000
+
+# Firebase Emulator設定
+FIREBASE_API_KEY=fake-api-key
+FIREBASE_AUTH_DOMAIN=localhost
+FIREBASE_DATABASE_URL=http://127.0.0.1:9000?ns=bundlephobia-local
+
+# Cache Service
+CACHE_SERVICE_ENDPOINT=http://localhost:7001
+
+# Firebase keys
+FIREBASE_READ_KEY=modules-v3
+FIREBASE_WRITE_KEY=modules-v3
+```
+
+`cache-service/.env` も同様に作成:
+
+```ini
+FIREBASE_API_KEY=fake-api-key
+FIREBASE_AUTH_DOMAIN=localhost
+FIREBASE_DATABASE_URL=http://127.0.0.1:9000?ns=bundlephobia-local
+FIREBASE_READ_KEY=modules-v3
+FIREBASE_WRITE_KEY=modules-v3
+```
+
+### 起動方法
+
+3 つのターミナルで以下を実行:
+
+**ターミナル 1: Firebase エミュレータ**
+
+```bash
+firebase emulators:start
+```
+
+**ターミナル 2: Cache Service**
+
+```bash
+cd cache-service
+yarn start
+```
+
+**ターミナル 3: メインアプリ**
+
+```bash
+yarn dev
+```
+
+### アクセス
+
+| サービス             | URL                   |
+| -------------------- | --------------------- |
+| Bundlephobia         | http://localhost:3000 |
+| Firebase Emulator UI | http://127.0.0.1:4000 |
+
+### 注意事項
+
+- ポート 5000 は macOS の AirPlay Receiver が使用しているため、デフォルトポートを 3000 に変更しています
+- Algolia API キーがない場合は、npm レジストリから直接バージョン情報を取得します
+- データは Firebase エミュレータに保存され、エミュレータを再起動すると消えます
+
 ## Sponsors
 
 <a href="https://www.digitalocean.com?utm_medium=opensource&utm_source=bundlephobia"><img width="100px" src="https://upload.wikimedia.org/wikipedia/commons/f/ff/DigitalOcean_logo.svg"/></a>
